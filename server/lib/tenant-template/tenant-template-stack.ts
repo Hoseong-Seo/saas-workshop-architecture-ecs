@@ -20,8 +20,6 @@ import getTimeString from '../utilities/helper-functions';
 
 interface TenantTemplateStackProps extends cdk.StackProps {
   stageName: string
-  lambdaReserveConcurrency: number
-  lambdaCanaryDeploymentPreference: string
   isPooledDeploy: boolean
   ApiKeySSMParameterNames: ApiKeySSMParameterNames
   tenantId: string
@@ -101,7 +99,7 @@ export class TenantTemplateStack extends cdk.Stack {
         stageName: props.stageName,
         tenantId: props.tenantId,
         tier: props.tier,
-        idpDetails: identityProvider.identityDetails,
+        // idpDetails: identityProvider.identityDetails,
         isEc2Tier,
         isRProxy,
         env: {

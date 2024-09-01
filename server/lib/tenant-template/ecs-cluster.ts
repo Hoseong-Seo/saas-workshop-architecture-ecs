@@ -14,7 +14,7 @@ export interface EcsClusterProps extends cdk.NestedStackProps {
   stageName: string
   tenantId: string
   tier: string
-  idpDetails: IdentityDetails
+  // idpDetails: IdentityDetails
   isEc2Tier: boolean
   isRProxy: boolean
   env: cdk.Environment

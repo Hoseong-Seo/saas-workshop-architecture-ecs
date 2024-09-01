@@ -72,30 +72,13 @@ export CDK_PARAM_TIER='basic'
 export CDK_PARAM_STAGE='prod'
 
 export CDK_BASIC_CLUSTER="$CDK_PARAM_STAGE-$CDK_PARAM_TIER"
-npx cdk diff tenant-template-stack-basic > diff_output.txt
-# if grep -q "There were no differences" diff_output.txt; then
-#     echo "No changes detected in the tenant-template-stack-basic."
-# else
-#     SERVICES=$(aws ecs list-services --cluster $CDK_BASIC_CLUSTER --query 'serviceArns[*]' --output text)
-#     for SERVICE in $SERVICES; do
-#         SERVICE_NAME=$(echo $SERVICE | rev | cut -d '/' -f 1 | rev)
-
-#         echo -n "==== Service Connect Disable: "
-#         aws ecs update-service \
-#             --cluster $CDK_BASIC_CLUSTER \
-#             --service $SERVICE_NAME \
-#             --service-connect-configuration 'enabled=false' \
-#             --no-cli-pager --query 'service.serviceArn' --output text
-        
-#     done
-# fi
-# rm diff_output.txt
+npx cdk diff tenant-template-stack-basic > ./diff_output.txt
 
 npm install
 
 npx cdk bootstrap
 #npx cdk deploy --all --require-approval=never
-npx cdk deploy shared-infra-stack
+# npx cdk deploy shared-infra-stack
 # npx cdk deploy tenant-template-stack-basic
 # npx cdk deploy tenant-template-stack-advanced
 npx cdk deploy core-appplane-stack

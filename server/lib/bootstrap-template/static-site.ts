@@ -1,3 +1,4 @@
+import * as cdk from 'aws-cdk-lib';
 import type * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
@@ -20,8 +21,9 @@ export interface StaticSiteProps {
   readonly wellKnownEndpointUrl?: string
   readonly defaultBranchName?: string
   readonly distribution: cloudfront.Distribution
-  readonly appBucket: s3.Bucket
+  readonly appBucket: s3.IBucket
   accessLogsBucket: s3.Bucket
+  env: cdk.Environment
 }
 
 export class StaticSite extends Construct {
@@ -53,11 +55,11 @@ export class StaticSite extends Construct {
       clientId: props.clientId,
       issuer: props.issuer,
       apiUrl: props.apiUrl,
-      wellKnownEndpointUrl: props.wellKnownEndpointUrl
+      wellKnownEndpointUrl: props.wellKnownEndpointUrl,
     };
     const buildProject = new codebuild.PipelineProject(this, `${id}NpmBuildProject`, {
       environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
       },
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
@@ -88,8 +90,7 @@ export class StaticSite extends Construct {
     const pipeline = new codepipeline.Pipeline(this, `${id}CodePipeline`, {
       crossAccountKeys: false,
       restartExecutionOnUpdate: true,
-      pipelineType: codepipeline.PipelineType.V2
-
+      pipelineType: codepipeline.PipelineType.V2,
     });
 
     //Source Stage
@@ -129,7 +130,8 @@ export class StaticSite extends Construct {
           bucket: props.appBucket,
           input: buildOutput,
           cacheControl: [codepipeline_actions.CacheControl.fromString('no-store')],
-          runOrder: 1
+          runOrder: 1,
+          
         })
       ]
     });

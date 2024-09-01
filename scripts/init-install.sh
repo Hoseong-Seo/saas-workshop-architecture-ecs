@@ -72,8 +72,8 @@ export CDK_PARAM_TIER='basic'
 export CDK_PARAM_STAGE='prod'
 
 export CDK_BASIC_CLUSTER="$CDK_PARAM_STAGE-$CDK_PARAM_TIER"
-npx cdk diff tenant-template-stack-basic > diff_output.txt
-# if grep -q "There were no differences" diff_output.txt; then
+npx cdk diff tenant-template-stack-basic > ./diff_output.txt
+# if grep -q "There were no differences" ./diff_output.txt; then
 #     echo "No changes detected in the tenant-template-stack-basic."
 # else
 #     SERVICES=$(aws ecs list-services --cluster $CDK_BASIC_CLUSTER --query 'serviceArns[*]' --output text)
@@ -96,12 +96,11 @@ npm install
 npx cdk bootstrap
 #npx cdk deploy --all --require-approval=never
 npx cdk deploy shared-infra-stack
-# npx cdk deploy tenant-template-stack-basic
-# npx cdk deploy tenant-template-stack-advanced
-npx cdk deploy core-appplane-stack
+npx cdk deploy tenant-template-stack-basic
+npx cdk deploy tenant-template-stack-advanced
 
 # Get SaaS application url
-ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name shared-infra-stack --query "Stacks[0].Outputs[?OutputKey=='adminSiteUrl'].OutputValue" --output text)
-APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name shared-infra-stack --query "Stacks[0].Outputs[?OutputKey=='appSiteUrl'].OutputValue" --output text)
-echo "Admin site url: $ADMIN_SITE_URL"
-echo "Application site url: $APP_SITE_URL"
+# ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name shared-infra-stack --query "Stacks[0].Outputs[?OutputKey=='adminSiteUrl'].OutputValue" --output text)
+# APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name shared-infra-stack --query "Stacks[0].Outputs[?OutputKey=='appSiteUrl'].OutputValue" --output text)
+# echo "Admin site url: $ADMIN_SITE_URL"
+# echo "Application site url: $APP_SITE_URL"
