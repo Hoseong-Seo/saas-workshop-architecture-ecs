@@ -88,7 +88,11 @@ done
 npm install
 
 npx cdk bootstrap
-npx cdk deploy --all --require-approval=never
+#npx cdk deploy --all --require-approval=never
+npx cdk deploy shared-infra-stack
+# npx cdk deploy core-appplane-stack
+npx cdk deploy tenant-template-stack-basic
+npx cdk deploy advanced-tier-stack
 
 # Get SaaS application url
 ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name controlplane-stack --query "Stacks[0].Outputs[?OutputKey=='adminSiteUrl'].OutputValue" --output text)

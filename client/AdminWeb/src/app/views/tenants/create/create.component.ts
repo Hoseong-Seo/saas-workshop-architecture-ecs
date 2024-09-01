@@ -13,7 +13,7 @@ export class CreateComponent implements OnInit {
   submitting = false;
   tenantForm = new FormGroup({
     tenantName: new FormControl('', [Validators.required]),
-    email: new FormControl('', [Validators.required]),
+    email: new FormControl('', [Validators.email, Validators.required]),
     tier: new FormControl('', [Validators.required]),
   });
   constructor(

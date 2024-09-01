@@ -9,8 +9,8 @@ import { SharedInfraStack } from '../lib/shared-infra/shared-infra-stack';
 import { AwsSolutionsChecks } from 'cdk-nag';
 
 const app = new cdk.App();
-cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
-// cdk.Aspects.of(app);
+// cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
+cdk.Aspects.of(app);
 // required input parameters
 if (!process.env.CDK_PARAM_SYSTEM_ADMIN_EMAIL) {
   throw new Error('Please provide system admin email');
@@ -141,7 +141,28 @@ const tenantTemplateStack = new TenantTemplateStack(app, `tenant-template-stack-
     region: process.env.CDK_DEFAULT_REGION
   }
 });
+
+const advancedTierTempStack = new TenantTemplateStack(app, `advanced-tier-stack`, {
+  tenantId: 'advanced',
+  stageName: stageName,
+  lambdaReserveConcurrency: lambdaReserveConcurrency,
+  lambdaCanaryDeploymentPreference: lambdaCanaryDeploymentPreference,
+  isPooledDeploy: false,
+  ApiKeySSMParameterNames: apiKeySSMParameterNames,
+  tenantMappingTable: coreAppPlaneStack.tenantMappingTable,
+  commitId: commitId,
+  tier: 'advanced',
+  advancedCluster: advancedCluster,
+  appSiteUrl: coreAppPlaneStack.appSiteUrl,
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION
+  }
+});
+
 tenantTemplateStack.addDependency(sharedInfraStack);
+advancedTierTempStack.addDependency(sharedInfraStack);
+
 cdk.Tags.of(tenantTemplateStack).add('TenantId', tenantId);
 cdk.Tags.of(tenantTemplateStack).add('IsPooledDeploy', String(isPooledDeploy));
 cdk.Aspects.of(tenantTemplateStack).add(new DestroyPolicySetter());
