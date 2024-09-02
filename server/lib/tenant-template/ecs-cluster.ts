@@ -14,7 +14,6 @@ export interface EcsClusterProps extends cdk.NestedStackProps {
   stageName: string
   tenantId: string
   tier: string
-  // idpDetails: IdentityDetails
   isEc2Tier: boolean
   isRProxy: boolean
   env: cdk.Environment
@@ -37,7 +36,7 @@ export class EcsCluster extends cdk.NestedStack {
     this.isEc2Tier = props.isEc2Tier;
     this.vpc = props.vpc;
     
-    let clusterName = `${props.stageName}-${tenantId}`; //-${timeStr}`;
+    let clusterName = `${props.stageName}-${tenantId}`;
     if('advanced' === props.tier.toLocaleLowerCase() ) {
       clusterName = `${props.stageName}-advanced-${cdk.Stack.of(this).account}`
     }
@@ -77,7 +76,5 @@ export class EcsCluster extends cdk.NestedStack {
       const thiCluster = this.cluster as ecs.Cluster;
       thiCluster.addAsgCapacityProvider(capacityProvider);
     }
-
   }
- 
 }

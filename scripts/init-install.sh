@@ -60,9 +60,8 @@ aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com 2>/dev/n
 # Preprovision basic infrastructure
 cd ./server
 
-export ECR_REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-sed "s/<REGION>/$ECR_REGION/g; s/<ACCOUNT_ID>/$ACCOUNT_ID/g" ./service-info.txt > ./lib/service-info.json
+sed "s/<REGION>/$REGION/g; s/<ACCOUNT_ID>/$ACCOUNT_ID/g" ./service-info.txt > ./lib/service-info.json
+
 # npx cdk bootstrap
 export CDK_PARAM_ONBOARDING_DETAIL_TYPE='Onboarding'
 export CDK_PARAM_PROVISIONING_DETAIL_TYPE=$CDK_PARAM_ONBOARDING_DETAIL_TYPE
@@ -72,32 +71,34 @@ export CDK_PARAM_TIER='basic'
 export CDK_PARAM_STAGE='prod'
 
 export CDK_BASIC_CLUSTER="$CDK_PARAM_STAGE-$CDK_PARAM_TIER"
-npx cdk diff tenant-template-stack-basic > ./diff_output.txt
-# if grep -q "There were no differences" ./diff_output.txt; then
-#     echo "No changes detected in the tenant-template-stack-basic."
-# else
-#     SERVICES=$(aws ecs list-services --cluster $CDK_BASIC_CLUSTER --query 'serviceArns[*]' --output text)
-#     for SERVICE in $SERVICES; do
-#         SERVICE_NAME=$(echo $SERVICE | rev | cut -d '/' -f 1 | rev)
+npx cdk diff tenant-template-stack-basic > ./diff_output.txt 2>&1
+if grep -q "There were no differences" ./diff_output.txt; then
+    echo "No changes detected in the tenant-template-stack-basic."
+else
+    echo "Changes detected in the tenant-template-stack-basic."
 
-#         echo -n "==== Service Connect Disable: "
-#         aws ecs update-service \
-#             --cluster $CDK_BASIC_CLUSTER \
-#             --service $SERVICE_NAME \
-#             --service-connect-configuration 'enabled=false' \
-#             --no-cli-pager --query 'service.serviceArn' --output text
+    SERVICES=$(aws ecs list-services --cluster $CDK_BASIC_CLUSTER --query 'serviceArns[*]' --output text)
+    for SERVICE in $SERVICES; do
+        SERVICE_NAME=$(echo $SERVICE | rev | cut -d '/' -f 1 | rev)
+
+        echo -n "==== Service Connect Disable: "
+        aws ecs update-service \
+            --cluster $CDK_BASIC_CLUSTER \
+            --service $SERVICE_NAME \
+            --service-connect-configuration 'enabled=false' \
+            --no-cli-pager --query 'service.serviceArn' --output text
         
-#     done
-# fi
-# rm diff_output.txt
+    done
+fi
+rm diff_output.txt
 
 npm install
 
 npx cdk bootstrap
-#npx cdk deploy --all --require-approval=never
-npx cdk deploy shared-infra-stack
-npx cdk deploy tenant-template-stack-basic
-npx cdk deploy tenant-template-stack-advanced
+npx cdk deploy shared-infra-stack --require-approval=never
+npx cdk deploy \
+    tenant-template-stack-basic \
+    tenant-template-stack-advanced --require-approval=never
 
 # Get SaaS application url
 # ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name shared-infra-stack --query "Stacks[0].Outputs[?OutputKey=='adminSiteUrl'].OutputValue" --output text)

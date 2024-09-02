@@ -10,10 +10,8 @@ fi
 REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')  # Region setting
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
-export CDK_PARAM_S3_BUCKET_NAME="saas-reference-architecture-ecs-$ACCOUNT_ID-$REGION"
-
 # Create S3 Bucket for provision source.
-
+export CDK_PARAM_S3_BUCKET_NAME="saas-reference-architecture-ecs-$ACCOUNT_ID-$REGION"
 if aws s3api head-bucket --bucket $CDK_PARAM_S3_BUCKET_NAME 2>/dev/null; then
     echo "Bucket $CDK_PARAM_S3_BUCKET_NAME already exists."
 else
@@ -49,7 +47,7 @@ echo "Bucket exists: $CDK_PARAM_S3_BUCKET_NAME"
 
 cd ../
 zip -rq source.zip . -x ".git/*" -x "**/node_modules/*" -x "**/cdk.out/*" -x "**/.aws-sam/*" 
-export CDK_PARAM_COMMIT_ID=$(aws s3api put-object --bucket "${CDK_PARAM_S3_BUCKET_NAME}" --key "source.zip" --body "./source.zip"  --output text)
+export CDK_PARAM_COMMIT_ID=$(aws s3api put-object --bucket "$CDK_PARAM_S3_BUCKET_NAME" --key "source.zip" --body "./source.zip"  --output text)
 
 rm source.zip
 echo "Source code uploaded to S3"
@@ -60,9 +58,8 @@ aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com 2>/dev/n
 # Preprovision basic infrastructure
 cd ./server
 
-export ECR_REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-sed "s/<REGION>/$ECR_REGION/g; s/<ACCOUNT_ID>/$ACCOUNT_ID/g" ./service-info.txt > ./lib/service-info.json
+sed "s/<REGION>/$REGION/g; s/<ACCOUNT_ID>/$ACCOUNT_ID/g" ./service-info.txt > ./lib/service-info.json
+
 # npx cdk bootstrap
 export CDK_PARAM_ONBOARDING_DETAIL_TYPE='Onboarding'
 export CDK_PARAM_PROVISIONING_DETAIL_TYPE=$CDK_PARAM_ONBOARDING_DETAIL_TYPE
@@ -72,8 +69,8 @@ export CDK_PARAM_TIER='basic'
 export CDK_PARAM_STAGE='prod'
 
 export CDK_BASIC_CLUSTER="$CDK_PARAM_STAGE-$CDK_PARAM_TIER"
-npx cdk diff tenant-template-stack-basic > diff_output.txt
-# if grep -q "There were no differences" diff_output.txt; then
+npx cdk diff tenant-template-stack-basic > ./diff_output.txt
+# if grep -q "There were no differences" ./diff_output.txt; then
 #     echo "No changes detected in the tenant-template-stack-basic."
 # else
 #     SERVICES=$(aws ecs list-services --cluster $CDK_BASIC_CLUSTER --query 'serviceArns[*]' --output text)
@@ -94,11 +91,7 @@ npx cdk diff tenant-template-stack-basic > diff_output.txt
 npm install
 
 npx cdk bootstrap
-#npx cdk deploy --all --require-approval=never
-npx cdk deploy shared-infra-stack
-# npx cdk deploy tenant-template-stack-basic
-# npx cdk deploy tenant-template-stack-advanced
-npx cdk deploy core-appplane-stack
+npx cdk deploy --all --require-approval=never
 
 # Get SaaS application url
 ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name shared-infra-stack --query "Stacks[0].Outputs[?OutputKey=='adminSiteUrl'].OutputValue" --output text)

@@ -73,7 +73,7 @@ export class TenantTemplateStack extends cdk.Stack {
       allowAllOutbound: true
     });
     ecsSG.connections.allowFrom(albSG, ec2.Port.tcp(80), 'Application Load Balancer');
-    ecsSG.connections.allowFrom(ecsSG, ec2.Port.tcp(3010), 'Backend Micrioservice');
+    ecsSG.connections.allowFrom(ecsSG, ec2.Port.tcp(3010), 'Backend Microservices');
 
     //=====================================================================
     const ec2Tier = ['advanced', 'premium'];
@@ -99,7 +99,6 @@ export class TenantTemplateStack extends cdk.Stack {
         stageName: props.stageName,
         tenantId: props.tenantId,
         tier: props.tier,
-        // idpDetails: identityProvider.identityDetails,
         isEc2Tier,
         isRProxy,
         env: {
