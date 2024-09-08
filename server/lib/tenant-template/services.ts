@@ -88,7 +88,7 @@ export class EcsService extends cdk.NestedStack {
       if (info.name !== 'users') {
         const tableName = info.tableName.replace(/_/g, '-').toLowerCase(); 
         table = new cdk.aws_dynamodb.Table(this, `${info.tableName}`, {
-          tableName: `${tableName}-${tenantName}-${timeStr}`,
+          tableName: `${tableName}-${tenantName}`,
           billingMode: cdk.aws_dynamodb.BillingMode.PROVISIONED,
           readCapacity: 5,
           writeCapacity: 5,
