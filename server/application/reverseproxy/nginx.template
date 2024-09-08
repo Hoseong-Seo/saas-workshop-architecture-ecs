@@ -26,13 +26,13 @@ http {
     # orders api
     location ~ ^/orders {
       # Reject requests with unsupported HTTP method
-      if ($request_method !~ ^(GET|POST|HEAD|OPTIONS|PUT|DELETE)$) {
-        return 405;
+      limit_except GET POST HEAD OPTIONS PUT DELETE {
+        deny all;
       }
 
       # Only requests matching the expectations will
       # get sent to the application server
-      proxy_pass http://orders-api.prod.sc:3010;
+      proxy_pass http://orders-api.${NAMESPACE}.sc:3010;
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection 'upgrade';
@@ -42,13 +42,13 @@ http {
     # products api
     location ~ ^/products {
       # Reject requests with unsupported HTTP method
-      if ($request_method !~ ^(GET|POST|HEAD|OPTIONS|PUT|DELETE)$) {
-        return 405;
+      limit_except GET POST HEAD OPTIONS PUT DELETE {
+        deny all;
       }
 
       # Only requests matching the expectations will
       # get sent to the application server
-      proxy_pass http://products-api.prod.sc:3010;
+      proxy_pass http://products-api.${NAMESPACE}.sc:3010;
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection 'upgrade';
@@ -58,13 +58,13 @@ http {
     # users api
     location ~ ^/users {
       # Reject requests with unsupported HTTP method
-      if ($request_method !~ ^(GET|POST|HEAD|OPTIONS|PUT|DELETE)$) {
-        return 405;
+      limit_except GET POST HEAD OPTIONS PUT DELETE {
+        deny all;
       }
 
       # Only requests matching the expectations will
       # get sent to the application server
-      proxy_pass http://users-api.prod.sc:3010;
+      proxy_pass http://users-api.${NAMESPACE}.sc:3010;
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection 'upgrade';

@@ -21,13 +21,14 @@ if (!process.env.CDK_PARAM_TENANT_ID) {
 }
 const basicId = 'basic';
 const AzCount = 3;
-
+const basicName = 'basic';
 if(AzCount < 2 || AzCount > 3) {
   throw new Error('Please Availability Zones count must be 2 or 3');
 }
 // required input parameters
 const systemAdminEmail = process.env.CDK_PARAM_SYSTEM_ADMIN_EMAIL;
 const tenantId = process.env.CDK_PARAM_TENANT_ID || basicId;
+const tenantName = process.env.CDK_PARAM_TENANT_NAME || basicName;
 
 const commitId = getEnv('CDK_PARAM_COMMIT_ID');
 const tier = getEnv('CDK_PARAM_TIER');
@@ -122,6 +123,7 @@ cdk.Aspects.of(coreAppPlaneStack).add(new DestroyPolicySetter());
 
 const tenantTemplateStack = new TenantTemplateStack(app, `tenant-template-stack-${tenantId}`, {
   tenantId: tenantId,
+  tenantName: tenantName,
   stageName: stageName,
   isPooledDeploy: isPooledDeploy,
   ApiKeySSMParameterNames: apiKeySSMParameterNames,
@@ -135,6 +137,7 @@ const tenantTemplateStack = new TenantTemplateStack(app, `tenant-template-stack-
 
 const advancedTierTempStack = new TenantTemplateStack(app, `tenant-template-stack-advanced`, {
   tenantId: 'advanced',
+  tenantName: tenantName,
   stageName: stageName,
   isPooledDeploy: false,
   ApiKeySSMParameterNames: apiKeySSMParameterNames,

@@ -15,14 +15,15 @@ import { EcsCluster } from './ecs-cluster';
 import { TenantInfraNag } from '../cdknag/tenant-infra-nag';
 import { addTemplateTag } from '../utilities/helper-functions';
 import { EcsService } from './services';
-import { HttpNamespace } from 'aws-cdk-lib/aws-servicediscovery';
-import getTimeString from '../utilities/helper-functions';
+// import { HttpNamespace } from 'aws-cdk-lib/aws-servicediscovery';
+
 
 interface TenantTemplateStackProps extends cdk.StackProps {
   stageName: string
   isPooledDeploy: boolean
   ApiKeySSMParameterNames: ApiKeySSMParameterNames
   tenantId: string
+  tenantName: string
   tenantMappingTable: Table
   commitId: string
   waveNumber?: string
@@ -41,7 +42,6 @@ export class TenantTemplateStack extends cdk.Stack {
     super(scope, id, props);
     const waveNumber = props.waveNumber || '1';
     addTemplateTag(this, 'TenantTemplateStack');
-    const timeStr = getTimeString();
 
     const identityProvider = new IdentityProvider(this, 'IdentityProvider', {
       tenantId: props.tenantId,
@@ -81,9 +81,9 @@ export class TenantTemplateStack extends cdk.Stack {
     const rProxy = ['advanced', 'premium'];
     const isRProxy: boolean = rProxy.includes(props.tier.toLowerCase());
 
-    const namespace = new HttpNamespace(this, 'CloudMapNamespace', {
-      name: `ecs-sbt.local-${props.tenantId}-${timeStr}`,
-    });
+    // const namespace = new HttpNamespace(this, 'CloudMapNamespace', {
+    //   name: `ecs-sbt.local-${props.tenantId}-${timeStr}`,
+    // });
     
     if('advanced' === props.tier.toLocaleLowerCase() && 'ACTIVE' === props.advancedCluster ) {
       let clusterName = `${props.stageName}-advanced-${cdk.Stack.of(this).account}`
@@ -113,6 +113,7 @@ export class TenantTemplateStack extends cdk.Stack {
       new EcsService(this, 'EcsServices', {
         stageName: props.stageName,
         tenantId: props.tenantId,
+        tenantName: props.tenantName,
         tier: props.tier,
         idpDetails: identityProvider.identityDetails,
         isEc2Tier,
@@ -121,7 +122,6 @@ export class TenantTemplateStack extends cdk.Stack {
         ecsSG: ecsSG,
         vpc: vpc,
         listener: listener,
-        namespace: namespace
       })
     }
     //=====================================================================

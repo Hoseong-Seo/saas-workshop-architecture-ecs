@@ -13,10 +13,12 @@ import { getHashCode } from '../utilities/helper-functions';
 import { type ContainerInfo } from '../interfaces/container-info';
 import { type RproxyInfo } from '../interfaces/rproxy-info';
 import { addTemplateTag } from '../utilities/helper-functions';
+import getTimeString from '../utilities/helper-functions';
 
 export interface EcsServiceProps extends cdk.NestedStackProps {
   stageName: string
   tenantId: string
+  tenantName: string
   tier: string
   idpDetails: IdentityDetails
   isEc2Tier: boolean
@@ -25,7 +27,6 @@ export interface EcsServiceProps extends cdk.NestedStackProps {
   ecsSG: ec2.SecurityGroup 
   vpc: ec2.IVpc;
   listener: elbv2.IApplicationListener;
-  namespace: HttpNamespace;
 }
 
 export class EcsService extends cdk.NestedStack {
@@ -41,11 +42,17 @@ export class EcsService extends cdk.NestedStack {
     super(scope, id, props);
     addTemplateTag(this, 'EcsClusterStack');
     const tenantId = props.tenantId;
+    const tenantName = props.tenantName;
     this.isEc2Tier = props.isEc2Tier;
     this.ecsSG = props.ecsSG;
     this.vpc = props.vpc;
-    this.namespace = props.namespace;
     this.listener = props.listener;
+    const timeStr = getTimeString();
+
+    this.namespace = new HttpNamespace(this, 'CloudMapNamespace', {
+      // name: `ecs-sbt.local-${props.tenantId}-${timeStr}`,
+      name: `${tenantName}`,
+    });
 
     // Read JSON file with container info
     const containerInfoJSON = fs.readFileSync(path.resolve(__dirname, '../service-info.json'));
@@ -67,6 +74,7 @@ export class EcsService extends cdk.NestedStack {
       rproxyService = this.createRproxyService(
         props.cluster,
         tenantId,
+        tenantName,
         info,
         taskExecutionRole,
         props.stageName
@@ -78,7 +86,9 @@ export class EcsService extends cdk.NestedStack {
       let table = null;
       let policy = JSON.stringify(info.policy);
       if (info.name !== 'users') {
+        const tableName = info.tableName.replace(/_/g, '-').toLowerCase(); 
         table = new cdk.aws_dynamodb.Table(this, `${info.tableName}`, {
+          tableName: `${tableName}-${tenantName}-${timeStr}`,
           billingMode: cdk.aws_dynamodb.BillingMode.PROVISIONED,
           readCapacity: 5,
           writeCapacity: 5,
@@ -94,6 +104,12 @@ export class EcsService extends cdk.NestedStack {
         new cdk.CfnOutput(this, `${info.name}TableName`, {
           value: table.tableName
         });
+
+        /** LAB4 Task Role for DynamoDB **/
+        const allTable = `arn:aws:dynamodb:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:table/*`
+        policy = policy.replace(/<TABLE_ARN>/g, allTable);
+        /**  LAB4 Task Role for DynamoDB **/
+
         policy = policy.replace(/<TABLE_ARN>/g, `${table.tableArn}`);
       } else {
         policy = policy.replace(/<USER_POOL_ID>/g, `${props.idpDetails.details.userPoolId}`);
@@ -155,6 +171,7 @@ export class EcsService extends cdk.NestedStack {
           COGNITO_CLIENT_ID: props.idpDetails.details.appClientId,
           COGNITO_REGION: cdk.Stack.of(this).region
         },
+        
         logging: ecs.LogDriver.awsLogs({ streamPrefix: 'ecs-container-logs' })
       });
 
@@ -172,7 +189,7 @@ export class EcsService extends cdk.NestedStack {
           services: [
             {
               portMappingName: info.name,
-              dnsName: `${info.name}-api.${props.stageName}.sc`,
+              dnsName: `${info.name}-api.${tenantName}.sc`,
               port: info.containerPort,
               discoveryName: `${info.name}-api`
             }
@@ -187,10 +204,12 @@ export class EcsService extends cdk.NestedStack {
         service = new ecs.FargateService(this, `${info.name}-service`, serviceProps);
       }
 
-      const alphaNumericTenantId = `${tenantId}`.replace(/[^a-zA-Z0-9]/g, '');
-      const cfnService = service.node.defaultChild as ecs.CfnService;
-      cfnService.overrideLogicalId(`${info.name}${alphaNumericTenantId}`);
-      cfnService.serviceName = `${info.name}${alphaNumericTenantId}`;
+      const cfnService = service.node.defaultChild as ecs.CfnService; 
+      // const alphaNumericName = `${tenantId}`.replace(/[^a-zA-Z0-9]/g, '');  // tenantId(UUID)
+      const alphaNumericName = `${props.tenantName}`.replace(/[^a-zA-Z0-9]/g, '');  // tenantName
+      cfnService.serviceName = `${info.name}${alphaNumericName}`;
+      cfnService.overrideLogicalId(cfnService.serviceName);
+      cfnService.enableExecuteCommand = true;
 
       if (props.isRProxy) {
         rproxyService.node.addDependency(service);
@@ -244,10 +263,12 @@ export class EcsService extends cdk.NestedStack {
   private createRproxyService (
     cluster: ecs.ICluster,
     tenantId: string,
+    tenantName: string,
     info: RproxyInfo,
     taskExecutionRole: iam.Role,
     stageName: string
   ): ecs.IService {
+
     let rproxyTaskDef = null;
     if (this.isEc2Tier) {
       // ec2
@@ -277,8 +298,10 @@ export class EcsService extends cdk.NestedStack {
         }
       ],
       environment: {
-        TENANT_ID: tenantId
+        TENANT_ID: tenantId,
+        NAMESPACE: tenantName
       },
+      command: ['/bin/sh', '-c', "envsubst '${NAMESPACE}' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"],
       logging: new ecs.AwsLogDriver({ streamPrefix: `rproxy-app-${tenantId}-` }),
       memoryLimitMiB: 320, // limit examples from the official docs
       cpu: 208 // limit examples from the official docs
@@ -299,7 +322,7 @@ export class EcsService extends cdk.NestedStack {
         services: [
           {
             portMappingName: info.name,
-            dnsName: `${info.name}-api.${stageName}.sc`,
+            dnsName: `${info.name}-api.${tenantName}.sc`,
             port: info.containerPort,
             discoveryName: `${info.name}-api`
           }
@@ -313,10 +336,13 @@ export class EcsService extends cdk.NestedStack {
       service = new ecs.FargateService(this, `${info.name}-nginx`, serviceProps);
     }
 
-    const alphaNumericTenantId = `${tenantId}`.replace(/[^a-zA-Z0-9]/g, '');
     const cfnService = service.node.defaultChild as ecs.CfnService;
-    cfnService.overrideLogicalId(`${info.name}${alphaNumericTenantId}`);
-    cfnService.serviceName = `${info.name}${alphaNumericTenantId}`;
+    
+    //const alphaNumericName = `${tenantId}`.replace(/[^a-zA-Z0-9]/g, '');
+    const alphaNumericName = `${tenantName}`.replace(/[^a-zA-Z0-9]/g, '');
+    cfnService.serviceName = `${info.name}${alphaNumericName}`;
+    cfnService.overrideLogicalId(cfnService.serviceName);
+    cfnService.enableExecuteCommand = true;
 
     const targetGroupHttp = new elbv2.ApplicationTargetGroup(this, `target-group-${tenantId}`, {
       port: info.containerPort,
@@ -342,12 +368,23 @@ export class EcsService extends cdk.NestedStack {
     // required so the ALB can reach the health-check endpoint
     service.connections.allowFrom(this.listener, ec2.Port.tcp(info.containerPort));
 
+
+    console.log(info.policy);
+    let policy = JSON.stringify(info.policy);
+    const policyDocument = iam.PolicyDocument.fromJson(JSON.parse(policy));
+
+    const inlinePolicy = new iam.Policy(this, `${info.name}-execPolicy`, {
+      document: policyDocument
+    });
+
+    rproxyTaskDef.taskRole.attachInlinePolicy(inlinePolicy); 
     rproxyTaskDef.taskRole.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy')
     );
     rproxyTaskDef.taskRole.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchFullAccess')
     );
+
     return service;
   }
 }

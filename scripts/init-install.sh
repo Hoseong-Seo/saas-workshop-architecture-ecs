@@ -1,17 +1,12 @@
 #!/bin/bash -e
 
-export CDK_PARAM_SYSTEM_ADMIN_EMAIL="$1"
+export CDK_PARAM_SYSTEM_ADMIN_EMAIL="dummy"
 
-if [[ -z "$CDK_PARAM_SYSTEM_ADMIN_EMAIL" ]]; then
-  echo "Please provide system admin email"
-  exit 1
-fi
 
 export REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')  # Region setting
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 # Create S3 Bucket for provision source.
-# export CDK_PARAM_COMMIT_ID=$(./update-provision-source.sh)
 source ./update-provision-source.sh
 
 echo "CDK_PARAM_COMMIT_ID exists: $CDK_PARAM_COMMIT_ID"
