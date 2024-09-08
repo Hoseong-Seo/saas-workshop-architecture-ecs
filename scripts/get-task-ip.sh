@@ -1,11 +1,25 @@
 #!/bin/bash
 
-export SERVICE_NAME="$1"
 
-if [ -z "$SERVICE_NAME" ]; then
-    echo "Usage: $0 <service-name>"
-    exit 1
+export IMAGE_NAME="$1"
+export TENANT="$2"
+
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <tenant> <image-name>"
+    exit 1  
 fi
+
+# if [ -z "$TENANT" ]; then
+#     echo "Usage: $0 <tenant> <image-name>"
+#     exit 1
+# fi
+
+# if [ -z "$IMAGE_NAME" ]; then
+#     echo "Usage: $0 <tenant> <image-name>"
+#     exit 1
+# fi
+
+SERVICE_NAME="${IMAGE_NAME}${TENANT}"
 
 CLUSTER_NAME=$(aws ecs list-clusters --query 'clusterArns[*]' --output json | jq -r '.[] | select(contains("/prod-advanced-")) | split("/") | .[1]') 
 
@@ -23,3 +37,4 @@ export PRIVATE_IP=$(aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks $TASK
 
 # Output the Private IP
 echo "Private IP: $PRIVATE_IP"
+echo "curl http://$PRIVATE_IP:3010/${IMAGE_NAME}"
