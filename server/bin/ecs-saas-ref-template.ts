@@ -137,7 +137,7 @@ const tenantTemplateStack = new TenantTemplateStack(app, `tenant-template-stack-
 
 const advancedTierTempStack = new TenantTemplateStack(app, `tenant-template-stack-advanced`, {
   tenantId: 'advanced',
-  tenantName: tenantName,
+  tenantName: 'advanced',
   stageName: stageName,
   isPooledDeploy: false,
   ApiKeySSMParameterNames: apiKeySSMParameterNames,

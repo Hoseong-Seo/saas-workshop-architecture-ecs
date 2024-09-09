@@ -56,7 +56,7 @@ export class IdentityProvider extends Construct {
         emailBody:
           `Login into tenant UI application at ${props.appSiteUrl} with tenant name [${props.tenantName}] username [{username}] and temporary password [{####}]`,
         smsMessage:
-          `Login into tenant UI application at ${props.appSiteUrl} with tenant name [${props.tenantName}] username [{username}] and temporary password [{####}]`,
+          'Login: ${props.appSiteUrl}, tenant: ${props.tenantName}, username:{username}, temp P.W:{####}',
       }
     });
 
