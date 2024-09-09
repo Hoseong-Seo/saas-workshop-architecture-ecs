@@ -27,7 +27,8 @@ export class CreateComponent implements OnInit {
     this.submitting = true;
     const tenant = {
       ...this.tenantForm.value,
-      tenantId: guid(),
+      // tenantId: guid(),
+      tenantId: this.email(),
       tenantStatus: 'In progress',
     };
 

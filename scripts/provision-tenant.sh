@@ -37,7 +37,7 @@ export TENANT_ADMIN_EMAIL=$email
 export TENANT_NAME=$tenantName
 
 # Define variables
-TENANT_ADMIN_USERNAME="tenant-admin-$CDK_PARAM_TENANT_ID"
+TENANT_ADMIN_USERNAME="$CDK_PARAM_TENANT_ID"
 STACK_NAME="tenant-template-stack-basic"
 USER_POOL_OUTPUT_PARAM_NAME="TenantUserpoolId"
 API_GATEWAY_URL_OUTPUT_PARAM_NAME="ApiGatewayUrl"

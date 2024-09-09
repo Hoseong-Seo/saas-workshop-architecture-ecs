@@ -45,7 +45,8 @@ export class TenantTemplateStack extends cdk.Stack {
 
     const identityProvider = new IdentityProvider(this, 'IdentityProvider', {
       tenantId: props.tenantId,
-      appSiteUrl: props.appSiteUrl
+      tenantName: props.tenantName,
+      appSiteUrl: props.appSiteUrl,
     });
 
     const vpc = ec2.Vpc.fromVpcAttributes(this, 'Vpc', {
