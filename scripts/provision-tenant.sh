@@ -37,7 +37,7 @@ export TENANT_ADMIN_EMAIL=$email
 export TENANT_NAME=$tenantName
 
 # Define variables
-TENANT_ADMIN_USERNAME="$CDK_PARAM_TENANT_ID"
+TENANT_ADMIN_USERNAME="tenant-admin-$CDK_PARAM_TENANT_ID"
 STACK_NAME="tenant-template-stack-basic"
 USER_POOL_OUTPUT_PARAM_NAME="TenantUserpoolId"
 API_GATEWAY_URL_OUTPUT_PARAM_NAME="ApiGatewayUrl"
@@ -73,7 +73,7 @@ API_GATEWAY_URL=$(aws cloudformation describe-stacks --stack-name $BOOTSTRAP_STA
 aws cognito-idp admin-create-user \
   --user-pool-id "$SAAS_APP_USERPOOL_ID" \
   --username "$TENANT_ADMIN_USERNAME" \
-  --user-attributes Name=email,Value="$TENANT_ADMIN_EMAIL" Name=email_verified,Value="True" Name=phone_number,Value="+11234567890" Name="custom:userRole",Value="TenantAdmin" Name="custom:tenantId",Value="$CDK_PARAM_TENANT_ID" Name="custom:tenantTier",Value="$TIER" \
+  --user-attributes Name=email,Value="$TENANT_ADMIN_EMAIL" Name=email_verified,Value="True" Name=phone_number,Value="+11234567890" Name="custom:userRole",Value="TenantAdmin" Name="custom:tenantId",Value="$CDK_PARAM_TENANT_ID" Name="custom:tenantTier",Value="$TIER" Name="custom:tenantName",Value="$TENANT_NAME"\
   --desired-delivery-mediums EMAIL
 
 # Create tenant user group

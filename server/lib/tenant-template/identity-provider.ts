@@ -5,7 +5,6 @@ import { addTemplateTag } from '../utilities/helper-functions';
 
 interface IdentityProviderStackProps extends StackProps {
   tenantId: string
-  tenantName: string
   appSiteUrl: string
 }
 
@@ -54,9 +53,9 @@ export class IdentityProvider extends Construct {
       userInvitation: {
         emailSubject: 'Your temporary password tenant UI application',
         emailBody:
-          `Login into tenant UI application at ${props.appSiteUrl} with tenant name [${props.tenantName}] username [{username}] and temporary password [{####}]`,
+          `Login into tenant UI application at ${props.appSiteUrl} with tenant-name: {custom:tenantname} username: {username} and temporary P.W: {####}`,
         smsMessage:
-          'Login: ${props.appSiteUrl}, tenant: ${props.tenantName}, username:{username}, temp P.W:{####}',
+          'Login: ${props.appSiteUrl}, tenant: ${custom:tenantName}, username:{username}, temp P.W:{####}',
       }
     });
 
