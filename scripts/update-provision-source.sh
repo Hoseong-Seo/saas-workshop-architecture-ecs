@@ -6,18 +6,19 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 # Create S3 Bucket for provision source.
 export CDK_PARAM_S3_BUCKET_NAME="saas-reference-architecture-ecs-$ACCOUNT_ID-$REGION"
-if aws s3api head-bucket --bucket $CDK_PARAM_S3_BUCKET_NAME 2>/dev/null; then
+
+if aws s3api head-bucket --bucket $CDK_PARAM_S3_BUCKET_NAME >/dev/null 2>&1; then
     echo "Bucket $CDK_PARAM_S3_BUCKET_NAME already exists."
 else
     echo "Bucket $CDK_PARAM_S3_BUCKET_NAME does not exist. Creating a new bucket in $REGION region in $ACCOUNT_ID"
 
     if [ "$REGION" == "us-east-1" ]; then
-      aws s3api create-bucket --bucket $CDK_PARAM_S3_BUCKET_NAME
+      aws s3api create-bucket --bucket $CDK_PARAM_S3_BUCKET_NAME | cat
     else
       aws s3api create-bucket \
         --bucket $CDK_PARAM_S3_BUCKET_NAME \
         --region "$REGION" \
-        --create-bucket-configuration LocationConstraint="$REGION" 
+        --create-bucket-configuration LocationConstraint="$REGION" | cat
     fi
 
     aws s3api put-bucket-versioning \
