@@ -9,15 +9,6 @@ if [ "$#" -ne 2 ]; then
     exit 1  
 fi
 
-# if [ -z "$TENANT" ]; then
-#     echo "Usage: $0 <tenant> <image-name>"
-#     exit 1
-# fi
-
-# if [ -z "$IMAGE_NAME" ]; then
-#     echo "Usage: $0 <tenant> <image-name>"
-#     exit 1
-# fi
 
 SERVICE_NAME="${IMAGE_NAME}${TENANT}"
 

@@ -40,30 +40,17 @@ export CDK_BASIC_CLUSTER="$CDK_PARAM_STAGE-$CDK_PARAM_TIER"
 npm install
 npx cdk bootstrap
 
-# npx cdk diff tenant-template-stack-basic > ./diff_output.txt 2>&1
-# if grep -q "There were no differences" ./diff_output.txt; then
-#     echo "No changes detected in the tenant-template-stack-basic."
-# else
-#     echo "Changes detected in the tenant-template-stack-basic."
 
-    SERVICES=$(aws ecs list-services --cluster $CDK_BASIC_CLUSTER --query 'serviceArns[*]' --output text || true)
-    for SERVICE in $SERVICES; do
-        SERVICE_NAME=$(echo $SERVICE | rev | cut -d '/' -f 1 | rev)
-
-        echo -n "==== Service Connect re-set if any...  "
-        aws ecs update-service \
-            --cluster $CDK_BASIC_CLUSTER \
-            --service $SERVICE_NAME \
-            --service-connect-configuration 'enabled=false' \
-            --no-cli-pager --query 'service.serviceArn' --output text
-        
-    done
-# fi
-# rm diff_output.txt
+SERVICES=$(aws ecs list-services --cluster $CDK_BASIC_CLUSTER --query 'serviceArns[*]' --output text || true)
+for SERVICE in $SERVICES; do
+    SERVICE_NAME=$(echo $SERVICE | rev | cut -d '/' -f 1 | rev)
+    echo -n "==== Service Connect re-set if any...  "
+    aws ecs update-service \
+        --cluster $CDK_BASIC_CLUSTER \
+        --service $SERVICE_NAME \
+        --service-connect-configuration 'enabled=false' \
+        --no-cli-pager --query 'service.serviceArn' --output text
+done
 
 
-npx cdk deploy shared-infra-stack --require-approval=never
-npx cdk deploy \
-    tenant-template-stack-basic \
-    tenant-template-stack-advanced \
-    core-appplane-stack --require-approval=never
+npx cdk deploy --all --require-approval=never
