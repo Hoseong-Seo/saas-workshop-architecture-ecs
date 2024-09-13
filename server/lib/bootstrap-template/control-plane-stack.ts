@@ -1,6 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import { type Construct } from 'constructs';
-// import { StaticSiteDistro } from './static-site-distro';
 import path = require('path');
 import { StaticSite } from './static-site';
 import { ControlPlaneNag } from '../cdknag/control-plane-nag';
@@ -14,7 +13,6 @@ interface ControlPlaneStackProps extends cdk.StackProps {
   accessLogsBucket: cdk.aws_s3.Bucket
   distro: StaticSiteDistro
   adminSiteUrl: string
-  // env: cdk.Environment
 }
 
 export class ControlPlaneStack extends cdk.Stack {

@@ -59,7 +59,7 @@ export class StaticSite extends Construct {
     };
     const buildProject = new codebuild.PipelineProject(this, `${id}NpmBuildProject`, {
       environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0
       },
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
@@ -130,8 +130,7 @@ export class StaticSite extends Construct {
           bucket: props.appBucket,
           input: buildOutput,
           cacheControl: [codepipeline_actions.CacheControl.fromString('no-store')],
-          runOrder: 1,
-          
+          runOrder: 1
         })
       ]
     });

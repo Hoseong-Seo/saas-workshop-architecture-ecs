@@ -148,7 +148,6 @@ const advancedTierTempStack = new TenantTemplateStack(app, `tenant-template-stac
   appSiteUrl: sharedInfraStack.appSiteUrl,
   env
 });
-
 tenantTemplateStack.addDependency(sharedInfraStack);
 advancedTierTempStack.addDependency(sharedInfraStack);
 

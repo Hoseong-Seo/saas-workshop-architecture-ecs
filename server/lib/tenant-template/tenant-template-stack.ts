@@ -17,7 +17,6 @@ import { addTemplateTag } from '../utilities/helper-functions';
 import { EcsService } from './services';
 // import { HttpNamespace } from 'aws-cdk-lib/aws-servicediscovery';
 
-
 interface TenantTemplateStackProps extends cdk.StackProps {
   stageName: string
   isPooledDeploy: boolean
@@ -192,7 +191,4 @@ export class TenantTemplateStack extends cdk.Stack {
     //   isRProxy
     // });
   }
-
-
-  
 }
