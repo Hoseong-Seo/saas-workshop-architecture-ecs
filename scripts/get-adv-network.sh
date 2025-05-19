@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 export IMAGE_NAME="$1"
 export TENANT="$2"
 
@@ -8,7 +7,6 @@ if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <image-name> <tenant>"
     exit 1  
 fi
-
 
 SERVICE_NAME="${IMAGE_NAME}${TENANT}"
 

@@ -7,7 +7,7 @@ sudo yum install -y jq
 sudo yum install -y python3-pip
 sudo yum install -y npm
 sudo npm install -g aws-cdk
-sudo python3 -m pip install --upgrade setuptools
+sudo python3 -m pip install --upgrade --ignore-installed setuptools
 
 # Enable nocasematch option
 shopt -s nocasematch
@@ -23,10 +23,25 @@ VERSIONS=$(aws s3api list-object-versions --bucket "$CDK_PARAM_S3_BUCKET_NAME" -
 CDK_PARAM_COMMIT_ID=$(echo "$VERSIONS" | awk 'NR==1{print $1}')
 
 aws s3api get-object --bucket "$CDK_PARAM_S3_BUCKET_NAME" --key "$CDK_SOURCE_NAME" --version-id "$CDK_PARAM_COMMIT_ID" "$CDK_SOURCE_NAME" 2>&1 
-unzip $CDK_SOURCE_NAME
+unzip -q $CDK_SOURCE_NAME
 cd ./server
 
-sed "s/<REGION>/$REGION/g; s/<ACCOUNT_ID>/$ACCOUNT_ID/g" ./service-info.txt > ./lib/service-info.json
+RDS_RESOURCES=$(aws cloudformation describe-stack-resources --stack-name 'shared-infra-stack' --query "StackResources[?ResourceType=='AWS::RDS::DBInstance']" --output text)
+if [ -z "$RDS_RESOURCES" ] 
+then
+  export CDK_USE_DB='dynamodb'
+else
+  export CDK_USE_DB='mysql'
+fi
+echo "CDK_USE_DB:$CDK_USE_DB"
+
+if [ "$CDK_USE_DB" == 'mysql' ]; then 
+    sed "s/<REGION>/$REGION/g; s/<ACCOUNT_ID>/$ACCOUNT_ID/g" ./service-info_mysql.txt > ./lib/service-info.json
+else
+    sed "s/<REGION>/$REGION/g; s/<ACCOUNT_ID>/$ACCOUNT_ID/g" ./service-info.txt > ./lib/service-info.json
+fi
+
+cat ./lib/service-info.json
 
 npm install
 
@@ -48,21 +63,24 @@ BOOTSTRAP_STACK_NAME="shared-infra-stack"
 
 # Deploy the tenant template for premium && advanced tier(silo)
 if [[ $TIER == "PREMIUM" || $TIER == "ADVANCED" ]]; then
-  STACK_NAME="tenant-template-stack-$CDK_PARAM_TENANT_ID"
-  if [[ $TIER == "ADVANCED" ]]; then
-    export CDK_ADV_CLUSTER=$(aws ecs describe-clusters --cluster prod-advanced-${ACCOUNT_ID} | jq -r '.clusters[0].status')
-  fi
+    STACK_NAME="tenant-template-stack-$CDK_PARAM_TENANT_ID"
+    if [[ $TIER == "PREMIUM" ]]; then
+      export CDK_ADV_CLUSTER='INACTIVE'
+    else
+      export CDK_ADV_CLUSTER='ACTIVE'
+    fi
 
-  export CDK_PARAM_CONTROL_PLANE_SOURCE='sbt-control-plane-api'
-  export CDK_PARAM_ONBOARDING_DETAIL_TYPE='Onboarding'
-  export CDK_PARAM_PROVISIONING_DETAIL_TYPE=$CDK_PARAM_ONBOARDING_DETAIL_TYPE
-  export CDK_PARAM_OFFBOARDING_DETAIL_TYPE='Offboarding'
-  export CDK_PARAM_DEPROVISIONING_DETAIL_TYPE=$CDK_PARAM_OFFBOARDING_DETAIL_TYPE
-  export CDK_PARAM_PROVISIONING_EVENT_SOURCE="sbt-application-plane-api"
-  export CDK_PARAM_APPLICATION_NAME_PLANE_SOURCE="sbt-application-plane-api"
-  export CDK_PARAM_TIER=$TIER
-  export CDK_PARAM_TENANT_NAME=$TENANT_NAME  #Added for demonstration during the workshop
-  cdk deploy $STACK_NAME --exclusively --require-approval never 
+    export CDK_PARAM_CONTROL_PLANE_SOURCE='sbt-control-plane-api'
+    export CDK_PARAM_ONBOARDING_DETAIL_TYPE='Onboarding'
+    export CDK_PARAM_PROVISIONING_DETAIL_TYPE=$CDK_PARAM_ONBOARDING_DETAIL_TYPE
+    export CDK_PARAM_OFFBOARDING_DETAIL_TYPE='Offboarding'
+    export CDK_PARAM_DEPROVISIONING_DETAIL_TYPE=$CDK_PARAM_OFFBOARDING_DETAIL_TYPE
+    export CDK_PARAM_PROVISIONING_EVENT_SOURCE="sbt-application-plane-api"
+    export CDK_PARAM_APPLICATION_NAME_PLANE_SOURCE="sbt-application-plane-api"
+    export CDK_PARAM_TIER=$TIER
+    export CDK_PARAM_TENANT_NAME=$TENANT_NAME  #Added for demonstration during the workshop
+
+    cdk deploy $STACK_NAME --exclusively --require-approval never 
 fi
 
 # Read tenant details from the cloudformation stack output parameters
@@ -93,4 +111,4 @@ export tenantConfig=$(jq --arg SAAS_APP_USERPOOL_ID "$SAAS_APP_USERPOOL_ID" \
 --arg SAAS_APP_CLIENT_ID "$SAAS_APP_CLIENT_ID" \
 --arg API_GATEWAY_URL "$API_GATEWAY_URL" \
 -n '{"userPoolId":$SAAS_APP_USERPOOL_ID,"appClientId":$SAAS_APP_CLIENT_ID,"apiGatewayUrl":$API_GATEWAY_URL}')
-export tenantStatus="Complete"
+export registrationStatus="Created"
