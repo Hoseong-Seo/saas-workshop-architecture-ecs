@@ -101,7 +101,7 @@ export class CoreAppPlaneStack extends cdk.Stack {
       provisioningScriptJobProps
     );
 
-    const deprovisioningScriptJob: sbt.ProvisioningScriptJob = new sbt.DeprovisioningScriptJob(
+    const deprovisioningScriptJob: sbt.DeprovisioningScriptJob = new sbt.DeprovisioningScriptJob(
       this,
       'deprovisioningScriptJob', 
       deprovisioningScriptJobProps

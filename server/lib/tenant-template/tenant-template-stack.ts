@@ -134,7 +134,7 @@ export class TenantTemplateStack extends cdk.Stack {
             }); 
             
             if(policy) { //additional policy like SSM
-              taskRole.attachInlinePolicy( new iam.Policy(this, 'MyPolicy', {
+              taskRole.attachInlinePolicy( new iam.Policy(this, `MyPolicy-${info.name}`, {
                 document: iam.PolicyDocument.fromJson(JSON.parse(policy))
               }));
             }
